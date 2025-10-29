@@ -13,8 +13,14 @@ export default function Home() {
   const [sqlContent, setSqlContent] = useState('');
 
   const loadSample = async () => {
+    console.log('Loading TV dataset...');
     const res = await fetch('/api/normalize?sample=tv');
+    if (!res.ok) {
+      console.error('API error:', await res.text());
+      return;
+    }
     const data = await res.json();
+    console.log('API response:', data);
     setResult(data);
     setStage('unf');
   };
@@ -53,6 +59,10 @@ export default function Home() {
     setSqlContent(sql);
     setSqlModal(true);
   };
+
+  useEffect(() => {
+    console.log('Current stage:', stage, 'Result:', result);
+  }, [stage, result]);
 
   return (
     <div className="p-4">
