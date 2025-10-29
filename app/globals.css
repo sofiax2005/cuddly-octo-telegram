@@ -8,3 +8,14 @@ body {
 code {
   font-family: 'Fira Code', monospace;
 }
+
+/* Redundancy flash animation */
+@keyframes redundancy-pulse {
+  0% { stroke: #ef4444; opacity: 1; }
+  50% { stroke: #dc2626; opacity: 0.5; transform: scale(1.05); }
+  100% { stroke: #ef4444; opacity: 1; transform: scale(1); }
+}
+
+.redundant {
+  animation: redundancy-pulse 1s ease-in-out infinite;
+}
