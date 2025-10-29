@@ -28,13 +28,21 @@ export default function ERCanvas({ result, stage }: ERCanvasProps) {
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   useEffect(() => {
-    if (!result || !svgRef.current) return;
+    if (!result || !svgRef.current) {
+      console.log('No result or SVG ref:', result);
+      return;
+    }
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
     const tables = result[stage].tables;
-    const candidateKeys = result.candidateKeys;
+    if (!tables || tables.length === 0) {
+      console.log(`No tables for stage ${stage}:`, result);
+      return;
+    }
+
+    console.log('Rendering tables:', tables);
 
     // Create nodes
     const nodes: Node[] = tables.map((t, i) => ({
@@ -47,6 +55,7 @@ export default function ERCanvas({ result, stage }: ERCanvasProps) {
 
     // Create edges based on candidate keys
     const edges: Edge[] = [];
+    const candidateKeys = result.candidateKeys || [];
     tables.forEach(t => {
       const key = candidateKeys.find(k => k.every(c => t.columns.includes(c)));
       if (key) {
@@ -130,7 +139,7 @@ export default function ERCanvas({ result, stage }: ERCanvasProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      style={{ width: '100%', height: '100%' }}
+      style={{ width: '100%', height: '100vh' }} // Ensure full height
     >
       <svg
         ref={svgRef}
