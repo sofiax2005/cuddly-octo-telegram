@@ -1,3 +1,5 @@
 {
-  "installCommand": "yarn install --frozen-lockfile"
+  {
+  "installCommand": "npm ci --ignore-scripts"
+}
 }
