@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@framer-motion": "^11.0.8",
     "@types/papaparse": "^5.4.10",
     "d3": "^7.9.0",
     "drizzle-orm": "^0.30.3",
