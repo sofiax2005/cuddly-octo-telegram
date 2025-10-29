@@ -37,3 +37,10 @@ export interface NormalizeResponse extends NormalizationData {
   sql: string; // Generated SQL schema
   error?: string;
 }
+
+// Placeholder for Relationship
+export interface Relationship {
+  from: string;
+  to: string;
+  type: 'FK' | '1:M' | 'M:N';
+}
