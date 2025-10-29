@@ -26,5 +26,13 @@
     "@types/react-dom": "^18.3.0",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ci": "vitest run --reporter=verbose"
   }
 }
