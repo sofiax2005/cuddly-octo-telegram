@@ -1,4 +1,4 @@
-import type { NormalizationData } from './types'; // Define types: { unf: Schema, 1nf: Schema, ... } where Schema = {entities: Entity[], ...}, Entity = {name: string, attributes: string[]}
+import type { NormalizationData, Schema, FunctionalDependency } from './types';
 
 export function normalizeData(csvData: any[]): NormalizationData {
   // Heuristic: detect multi-valued columns
@@ -63,13 +63,13 @@ export function normalizeData(csvData: any[]): NormalizationData {
   // Add missing RATINGS
   threeNF.entities.push({ name: 'RATINGS', attributes: ['rating_id PK', 'rating'] });
 
-  const dependencies = [
+  const dependencies: FunctionalDependency[] = [
     { lhs: ['show_id'], rhs: ['title', 'release_year'] },
     { lhs: ['director_id'], rhs: ['director'] },
     // etc.
   ];
 
-  const keys = [['show_id']];
+  const keys: string[][] = [['show_id']];
 
   return {
     unf,
@@ -81,7 +81,7 @@ export function normalizeData(csvData: any[]): NormalizationData {
   };
 }
 
-function generateSQL(schema: Schema): string {
+export function generateSQL(schema: Schema): string {
   let sql = '';
   schema.entities.forEach(entity => {
     sql += `CREATE TABLE ${entity.name} (\n`;
