@@ -14,7 +14,12 @@ export default function Home() {
   const [sql, setSql] = useState('');
   const { readString } = usePapaParse();
   const fileInputRef = useRef<HTMLInputElement>(null);
+const stages = ['UNF', '1NF', '2NF', '3NF'];
+  const currentSchema = normData ? normData[stages[stage - 1] || 'unf'] : null;
+  const currentNarration = normData ? getNarration(stage) : ''; // Use helper or from types
 
+  // In the canvas render:
+  <ERCanvas schema={currentSchema} stage={stage} narration={currentNarration} />
   const loadSample = () => {
     fetch('/data/tv_dataset.csv')
       .then((res) => res.text())
@@ -154,4 +159,12 @@ export default function Home() {
       </motion.div>
     </main>
   );
-}
+function getNarration(stage: number): string {
+  const narrations = {
+    1: 'UNF: A single chaotic entity with redundancies.',
+    2: '1NF: Multi-valued attributes are splitting into atomic forms—watch them fall out!',
+    3: '2NF: Partial dependencies highlighted and decomposed.',
+    4: '3NF: Transitive dependencies eliminated for minimal redundancy.',
+  };
+  return narrations[stage] || '';
+}}
