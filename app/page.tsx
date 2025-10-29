@@ -4,22 +4,22 @@ import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from '@framer-motion';
 import ERCanvas from '@/components/ERCanvas';
 import { usePapaParse } from 'react-papaparse';
-import { normalizeData } from '@/lib/normalize';
+import { normalizeData, generateSQL } from '@/lib/normalize';
+import type { NormalizationData } from '@/lib/types';
 import { Button } from '@/components/ui/button'; // Assume shadcn or simple Tailwind button
 
 export default function Home() {
   const [stage, setStage] = useState(0); // 0: start, 1: UNF, 2:1NF, 3:2NF, 4:3NF, 5:summary
   const [data, setData] = useState<any[]>([]);
-  const [normData, setNormData] = useState(null);
+  const [normData, setNormData] = useState<NormalizationData | null>(null);
   const [sql, setSql] = useState('');
   const { readString } = usePapaParse();
   const fileInputRef = useRef<HTMLInputElement>(null);
-const stages = ['UNF', '1NF', '2NF', '3NF'];
-  const currentSchema = normData ? normData[stages[stage - 1] || 'unf'] : null;
-  const currentNarration = normData ? getNarration(stage) : ''; // Use helper or from types
 
-  // In the canvas render:
-  <ERCanvas schema={currentSchema} stage={stage} narration={currentNarration} />
+  const stages = ['UNF', '1NF', '2NF', '3NF'];
+  const currentSchema = normData ? normData[stages[stage - 1] || 'unf'] : null;
+  const currentNarration = getNarration(stage);
+
   const loadSample = () => {
     fetch('/data/tv_dataset.csv')
       .then((res) => res.text())
@@ -56,20 +56,12 @@ const stages = ['UNF', '1NF', '2NF', '3NF'];
     }
   };
 
-  const stages = ['UNF', '1NF', '2NF', '3NF'];
-  const currentSchema = normData ? normData[stages[stage - 1] || 'unf'] : null;
-
-  const generateSQL = (schema: any) => {
-    // Simplified SQL gen; in prod, use Drizzle schema builder
-    let sqlStr = '';
-    schema.entities.forEach((entity: any) => {
-      sqlStr += `CREATE TABLE ${entity.name} (\n`;
-      entity.attributes.forEach((attr: string) => {
-        sqlStr += `  ${attr},\n`;
-      });
-      sqlStr = sqlStr.slice(0, -2) + `\n);\n\n`;
-    });
-    return sqlStr;
+  const toggleSQL = () => {
+    if (sql) {
+      setSql('');
+    } else if (normData) {
+      setSql(generateSQL(normData['3nf']));
+    }
   };
 
   return (
@@ -98,13 +90,13 @@ const stages = ['UNF', '1NF', '2NF', '3NF'];
             <Button onClick={() => setStage(1)}>Start Normalization</Button>
           </motion.div>
         )}
-        {stage > 0 && stage < 5 && (
+        {stage > 0 && stage < 5 && normData && (
           <motion.div key="canvas" className="flex flex-col items-center">
             <div className="mb-4">
               <span className="px-4 py-2 bg-blue-200 rounded-full text-sm font-mono">{stages[stage - 1]}</span>
             </div>
             <div className="w-full max-w-4xl h-[600px] border rounded-lg overflow-hidden bg-white">
-              <ERCanvas schema={currentSchema} stage={stage} />
+              <ERCanvas schema={currentSchema} stage={stage} narration={currentNarration} />
             </div>
             <div className="flex justify-center mt-4 space-x-4">
               <Button onClick={() => setStage(Math.max(1, stage - 1))} disabled={stage === 1}>Back</Button>
@@ -124,11 +116,13 @@ const stages = ['UNF', '1NF', '2NF', '3NF'];
               {/* Side-by-side canvases */}
               <div className="grid grid-cols-2 gap-4">
                 <ERCanvas schema={normData?.unf} stage={1} small />
-                <ERCanvas schema={normData?['3nf']} stage={4} small />
+                <ERCanvas schema={normData?.['3nf']} stage={4} small />
               </div>
             </div>
             <div>
-              <Button onClick={() => setSql('')}>See SQL Schema</Button>
+              <Button onClick={toggleSQL}>
+                {sql ? 'Hide SQL Schema' : 'See SQL Schema'}
+              </Button>
               {sql && (
                 <pre className="mt-4 p-4 bg-gray-100 rounded overflow-auto font-mono text-sm">
                   {sql}
@@ -137,7 +131,15 @@ const stages = ['UNF', '1NF', '2NF', '3NF'];
               {/* Export buttons: use html2canvas for PNG, d3 for SVG */}
               <div className="mt-4 space-x-2">
                 <Button>Export ERD (SVG)</Button>
-                <Button>Export Schema (SQL)</Button>
+                <Button onClick={() => {
+                  // Placeholder: download SQL
+                  const blob = new Blob([sql], { type: 'text/plain' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'schema.sql';
+                  a.click();
+                }}>Export Schema (SQL)</Button>
               </div>
             </div>
           </motion.div>
@@ -147,18 +149,10 @@ const stages = ['UNF', '1NF', '2NF', '3NF'];
       {stage < 5 && stage > 0 && (
         <Button onClick={() => setStage(5)} className="mt-8 mx-auto block">View Summary</Button>
       )}
-
-      {/* Narration bubble example */}
-      <motion.div
-        className="absolute top-20 right-10 bg-white p-4 rounded shadow-lg max-w-xs"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.5 }}
-      >
-        <p className="text-sm text-gray-700">Multi-valued attributes like 'cast' are splitting into a new entity.</p>
-      </motion.div>
     </main>
   );
+}
+
 function getNarration(stage: number): string {
   const narrations = {
     1: 'UNF: A single chaotic entity with redundancies.',
@@ -167,4 +161,4 @@ function getNarration(stage: number): string {
     4: '3NF: Transitive dependencies eliminated for minimal redundancy.',
   };
   return narrations[stage] || '';
-}}
+}
